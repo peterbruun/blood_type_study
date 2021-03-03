@@ -2,6 +2,8 @@
 # Snakefile pipeline for the paper: 
 # ABO/RhD Blood Groups and Phenome-Wide Disease Incidence in 481,298 Danish Patients
 # The code is free to use but please considered citing the paper if you use the code
+# The code includes an analysis both using PheCodes and ICD-10 codes 
+#	while the paper only presents the results from the PheCode analysis
 # ----------------------------------------------- #
 
 workdir: "/home/people/petras/bloodtype_diseases/"
