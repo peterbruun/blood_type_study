@@ -22,7 +22,7 @@ first_run = False
 
 # Define workdir
 workdir: "/users/projects/bloodtype/"
-# anaconda3/2021.5
+
 
 import numpy as np
 import pandas as pd
@@ -65,7 +65,7 @@ rule all:
 		"results/table1.html",
 
 		# Analysis input files for each code
-		#expand("data/processed/PheWAS/{phecode}.tsv",phecode=phecodes_to_include),
+		expand("data/processed/PheWAS/{phecode}.tsv",phecode=phecodes_to_include),
 
 		# -- all other vs One -- #
 		expand("results/20220531/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv", blood_group =["A","B","AB","0"],phecode=phecodes_to_include),
@@ -73,7 +73,6 @@ rule all:
 		"results/20220531/allVSOne/enter_registry/phewas_estimates.tsv",
 		
 		# Age at diagnosis:
-		# linear model
 		"results/20220531/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
 
 		# Infiles
@@ -85,11 +84,10 @@ rule all:
 		phecodes = "/users/secureome/home/people/petras/base_data/Phecode_map_v1_2_icd10_beta.csv",
 		phecodes_def = "/users/secureome/home/people/petras/base_data/phecode_def.csv",
 		icd10_block_codes = "/users/secureome/home/classification/complete/icd10_eng_diag_chapters_all_update2016.tsv",
-		lpr2bth_mapping = "data/raw/valid_lpr2bth.tsv",
+		
 		# Outfiles
 		phecodes_to_include = "data/processed/included_phecodes.tsv",
-		blocklevels_to_include = "data/processed/included_blocklevels.tsv",
-		level3_to_include = "data/processed/included_level3.tsv",
+
 
 
 rule preprocess_full_lpr_raw_ulrik: 
@@ -349,6 +347,7 @@ rule clean_bloodtype:
 		mem_mb = 1024*50,
 	threads: 1,
 	run:
+		
 		#bloodtypes = pd.read_csv("/users/secureome/home/projects/bth/personal_folders/vicmuse/BloodType/bloodtypes_cleaned.tsv",sep="\t",names=["cpr_enc","Date_bt_meassured","Bloodtype","AB0","Rhesus"])
 		bloodtypes = pd.read_csv(input["bloodtypes"],sep="\t",names=["cpr_enc","Date_bt_meassured","Bloodtype","AB0","Rhesus"])
 		
@@ -358,13 +357,14 @@ rule clean_bloodtype:
 		bloodtypes["Date_bt_meassured"] = pd.to_datetime(bloodtypes["Date_bt_meassured"],format="%d-%m-%Y",errors="coerce")
 		bloodtypes = bloodtypes[(bloodtypes.Date_bt_meassured>=start_of_BTH)&(bloodtypes.Date_bt_meassured<=end_of_BTH)].copy()
 
+
 		# Remove cprs with changing bloodtypes
 		# First drop duplicates with same meassured bloodtype
 		bloodtypes.drop_duplicates(["cpr_enc","Bloodtype"],inplace=True,keep="first")
 		# Then drop CPRs with changing bloodtypes
 		bloodtypes.drop_duplicates(["cpr_enc"],inplace=True,keep=False)
 
-		# Remove wierd bloodtypes
+		# Remove weak RhD bloodtypes and missing blodtypes (XX)
 		mask = (bloodtypes.Bloodtype=="AB+DU")|(bloodtypes.Bloodtype=="0+DU")|(bloodtypes.Bloodtype=="B+DU")|(bloodtypes.Bloodtype=="A+DU")|(bloodtypes.Bloodtype=="XX")
 		bloodtypes = bloodtypes.loc[~mask,:].copy()
 
@@ -406,8 +406,8 @@ rule add_bloodtype_to_lpr:
 	threads: 1,
 	run:
 		# testing
-		#lpr = pd.read_pickle("data/processed/lpr_phecodes_block.pkl")
-		#bloodtypes = pd.read_pickle("data/interim/bloodtypes_cleaned.pkl")
+		lpr = pd.read_pickle("data/processed/lpr_phecodes_block.pkl")
+		bloodtypes = pd.read_pickle("data/interim/bloodtypes_cleaned.pkl")
 
 		# Load lpr and bloodtypes
 		lpr = pd.read_pickle(input.lpr)
@@ -631,7 +631,7 @@ rule prepare_PheWAS_input:
 		study_data = pd.concat([cases,controls],ignore_index=True,axis=0)
 		del cases, controls
 
-		# Drop dups -> none were present
+		# Drop dups
 		study_data.sort_values(by=["cpr_enc","TIME"],inplace=True)
 		study_data.drop_duplicates(subset=["cpr_enc"],keep="first",inplace=True)
 
