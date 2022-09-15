@@ -8,8 +8,6 @@ library(PheWAS)
 library(RColorBrewer)
 library(ggpubr)
 
-#setwd("/users/people/petras/bloodtype_diseasesV2/")
-#setwd("/users/secureome/home/people/petras/bloodtype_diseasesV2/")
 setwd("/users/projects/bloodtype/")
 
 # Disease color 
@@ -280,108 +278,4 @@ theme(
   panel.grid.minor = element_blank(),
   panel.background=element_blank()))
 dev.off()
-
-
-
-# ## Plot significant hits with higheste IRRs
-# # https://datascienceplus.com/lattice-like-forest-plot-using-ggplot2-in-r/
-
-
-# data = read_tsv("results/20220531/quasi_spline_poisson/enter_registry/phewas_estimates.tsv")
-# data$phecode = as.character(data$phecode)
-
-# # Map colour code onto
-# data[is.na(data$category),"category"] = "Other"
-# data <- left_join(data,mapping,by="category")
-
-# # Select subset with significant phecodes
-
-# #significant_phecodes <- data %>% 
-# #	filter(term %in% c("factor(AB0)A","factor(AB0)B","factor(AB0)AB","factor(Rhesus)Positiv") & FDR_.05) %>% 
-# #	select(phecode) %>% unique() %>% pull()
-
-# data <- data %>% filter(data$FDR_.05 & term %in% c("factor(AB0)A","factor(AB0)B","factor(AB0)AB","factor(Rhesus)Positiv"))
-
-
-# # Remove factor # Rename columns not good with ( ) in column names
-# data <- data %>%
-#   mutate(term = case_when(
-#     term == "factor(AB0)A"  ~ "Blood Group A",
-#     term == "factor(AB0)B"  ~ "Blood Group B",
-#     term == "factor(AB0)AB"  ~ "Blood Group AB",
-#     term == "factor(Rhesus)Positiv"  ~ "Blood Group RhD",
-#     TRUE ~ term
-#   ))
-
-# # Set order of term and phecodes
-# data[is.na(data$category),"category"] = "Other"
-# data <- data %>% 
-#   mutate(category = str_to_title(category))
-# group_order <- data %>% 
-#   arrange(as.numeric(phecode)) %>% 
-#   distinct(category) %>% 
-#   pull(category)
-# data <- data %>%
-#   arrange(as.numeric(phecode)) %>%
-#   mutate(Blood_type = factor(term,levels = c("Blood Group RhD","Blood Group 0","Blood Group AB","Blood Group B","Blood Group A")),category = factor(category, levels = group_order),name=phenotype)
-
-#       #
-# # Get estimate back to log-scale
-# #data$estimate = log(data$estimate)
-# data[data$name=="Abnormality of organs and soft tissues of pelvis complicating pregnancy, childbirth, or the puerperium","name"] = "Abnormality of organs/soft tissues of pelvis complicating pregnancy"
-# # Every other
-# data$name = gsub("( \\S+) ", "\\1\n", data$name)
-
-# # Construct confidence intervals
-# data <- data %>% mutate(
-# 	CI_low = estimate/exp(qnorm(0.975)*std.error),
-#  	CI_high = estimate*exp(qnorm(0.975)*std.error),
-#  	IRR = estimate)
-
-# # Sort on associations with biggest effect
-# inverse <- data %>% arrange(IRR)
-# positive <- data %>% arrange(desc(IRR))
-
-
-# p = ggplot(data=positive[1:20,],
-#     aes(x = reorder(name,IRR),y = IRR, ymin = CI_low, ymax = CI_high ))+
-#     #geom_point(aes(shape = term,col=category), size = 4) +
-#     geom_pointrange(aes(col=term))+
-#     geom_hline(aes(fill=term),yintercept =1, linetype=2)+
-#     xlab('term')+ ylab("Incidence Rate Ratio (95% Confidence Interval)") +
-#     labs(title = "Top 20 Postive Blood Group Associations") +
-#     geom_errorbar(aes(ymin=CI_low, ymax=CI_high,col=term),width=0.5,cex=1)+ 
-#     #facet_wrap(~category,strip.position="left",nrow=9,scales = "free_y") +
-#     scale_colour_discrete("Blood Group") +
-#     theme(plot.title=element_text(size=16),#,face="bold"),
-#         #axis.text.y=element_blank(),
-#         #axis.ticks.y=element_blank(),
-#         axis.text.x=element_text(face="bold"),
-#         axis.title=element_text(size=12,face="bold"),
-#         axis.title.y=element_blank(),
-#         strip.text.y = element_text(hjust=0,vjust = 1,angle=180,face="bold"))+
-#     coord_flip()
-#  p
-# ggsave("results/20220531/quasi_spline_poisson/enter_registry/top20_positive_IRRs.pdf",height=8)
-
-# p = ggplot(data=inverse[1:20,],
-#     aes(x = reorder(name,-IRR),y = IRR, ymin = CI_low, ymax = CI_high ))+
-#     #geom_point(aes(shape = term,col=category), size = 4) +
-#     geom_pointrange(aes(col=term))+
-#     geom_hline(aes(fill=term),yintercept =1, linetype=2)+
-#     xlab('term')+ ylab("Incidence Rate Ratio (95% Confidence Interval)") +
-#     labs(title = "Top 20 Inverse Blood Group associations") +
-#     geom_errorbar(aes(ymin=CI_low, ymax=CI_high,col=term),width=0.5,cex=1)+ 
-#     #facet_wrap(~category,strip.position="left",nrow=9,scales = "free_y") +
-#     scale_colour_discrete("Blood Group") +
-#     theme(plot.title=element_text(size=16),#,face="bold"),
-#         #axis.text.y=element_blank(),
-#         #axis.ticks.y=element_blank(),
-#         axis.text.x=element_text(face="bold"),
-#         axis.title=element_text(size=12,face="bold"),
-#         axis.title.y=element_blank(),
-#         strip.text.y = element_text(hjust=0,vjust = 1,angle=180,face="bold"))+
-#     coord_flip()
-#  p
-# ggsave("results/20220531/quasi_spline_poisson/enter_registry/top20_inverse_IRRs.pdf",height=8)
 
