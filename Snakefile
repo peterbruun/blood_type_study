@@ -10,19 +10,19 @@
 
 # 1) First time the script is run the follwing snakemake command should be evoked
 # run: snakemake -R --until filter_phecodes_and_blocklevels_level3_to_include
-# And first run should be set to True
-# first_run = True
+#bash snakemake_qsub_fatnode -j 10 --snakefile /users/projects/bloodtype/Snakefile --dry-run --until filter_phecodes_and_blocklevels_level3_to_include
+
+# And first run should be set to True (uncomment line below)
+#first_run = True
 
 # 2) At the second run the clean snakemake command should be evoked
 # run: snakemake
-# And the first run should be set to False
+#bash snakemake_qsub_fatnode -j 100 --snakefile /users/projects/bloodtype/Snakefile --dry-run
+# And the first run should be set to False (uncomment line below)
 first_run = False
 
+
 # ----------------------------------------------- #
-
-# Define workdir
-workdir: "/users/projects/bloodtype/"
-
 
 import numpy as np
 import pandas as pd
@@ -34,12 +34,15 @@ pd.set_option('display.max_columns', 1000)
 pd.set_option('max_info_columns', 10**10)
 pd.set_option('max_info_rows', 10**10)
 
+
+# Define workdir
+workdir: "/users/projects/bloodtype/"
 os.chdir("/users/projects/bloodtype/")
 
 
 if first_run:
 	# Random list of phecodes for first run of script
-	phecodes_to_include = ["286.3"]
+	phecodes_to_include = ["286.3","728.1"]
 else:
 	# Second run: Can only be run after rule: filter_phecodes_and_blocklevels_level3_to_include
 	phecodes_to_include = pd.read_csv("data/processed/included_phecodes.tsv",sep="\t",dtype=str)
@@ -59,6 +62,8 @@ non_congenital_phecodes_to_include.remove("728.1")
 
 rule all:
 	input:
+		# Testing files requires
+		"data/processed/lpr_phecodes_block.pkl",
 		# Final file
 		"data/processed/bloodtype_final.pkl",
 		# Table 1
@@ -68,12 +73,12 @@ rule all:
 		expand("data/processed/PheWAS/{phecode}.tsv",phecode=phecodes_to_include),
 
 		# -- all other vs One -- #
-		expand("results/20220531/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv", blood_group =["A","B","AB","0"],phecode=phecodes_to_include),
-		expand("results/20220531/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=phecodes_to_include),
-		"results/20220531/allVSOne/enter_registry/phewas_estimates.tsv",
+		expand("results/20220915/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv", blood_group =["A","B","AB","0"],phecode=phecodes_to_include),
+		expand("results/20220915/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=phecodes_to_include),
+		"results/20220915/allVSOne/enter_registry/phewas_estimates.tsv",
 		
 		# Age at diagnosis:
-		"results/20220531/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
+		"results/20220915/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
 
 		# Infiles
 		bloodtypes = "/users/secureome/home/projects/bth/personal_folders/vicmuse/BloodType/bloodtypes_cleaned.tsv",
@@ -305,7 +310,7 @@ rule add_blocklevel_and_level3_label_to_lpr:
 		icd10_block_codes = rules.all.input.icd10_block_codes,
 		lpr_phecode = rules.fix_wrongly_assigned_perinatal_and_pregnancy_diagnosis.output.lpr,
 	output:
-		lpr_block = temp("data/processed/lpr_phecodes_block.pkl"),
+		lpr_block = "data/processed/lpr_phecodes_block.pkl",
 	resources:
 		tmin = 60*24*1,
 		mem_mb = 1024*50,
@@ -347,7 +352,7 @@ rule clean_bloodtype:
 		mem_mb = 1024*50,
 	threads: 1,
 	run:
-		
+
 		#bloodtypes = pd.read_csv("/users/secureome/home/projects/bth/personal_folders/vicmuse/BloodType/bloodtypes_cleaned.tsv",sep="\t",names=["cpr_enc","Date_bt_meassured","Bloodtype","AB0","Rhesus"])
 		bloodtypes = pd.read_csv(input["bloodtypes"],sep="\t",names=["cpr_enc","Date_bt_meassured","Bloodtype","AB0","Rhesus"])
 		
@@ -356,42 +361,64 @@ rule clean_bloodtype:
 		end_of_BTH = pd.Timestamp(datetime.date(2018, 4, 10))
 		bloodtypes["Date_bt_meassured"] = pd.to_datetime(bloodtypes["Date_bt_meassured"],format="%d-%m-%Y",errors="coerce")
 		bloodtypes = bloodtypes[(bloodtypes.Date_bt_meassured>=start_of_BTH)&(bloodtypes.Date_bt_meassured<=end_of_BTH)].copy()
-
-
-		# Remove cprs with changing bloodtypes
-		# First drop duplicates with same meassured bloodtype
+		# Drop duplicates with same meassured bloodtype
 		bloodtypes.drop_duplicates(["cpr_enc","Bloodtype"],inplace=True,keep="first")
-		# Then drop CPRs with changing bloodtypes
-		bloodtypes.drop_duplicates(["cpr_enc"],inplace=True,keep=False)
-
-		# Remove weak RhD bloodtypes and missing blodtypes (XX)
-		mask = (bloodtypes.Bloodtype=="AB+DU")|(bloodtypes.Bloodtype=="0+DU")|(bloodtypes.Bloodtype=="B+DU")|(bloodtypes.Bloodtype=="A+DU")|(bloodtypes.Bloodtype=="XX")
+		# Drop entries where bloodtype wasnt registered
+		mask = (bloodtypes.Bloodtype == "XX")
 		bloodtypes = bloodtypes.loc[~mask,:].copy()
 
 		# Add birthdate and sex
 		t_person = pd.read_csv(input["t_person"], dtype="str",sep="\t",usecols=["v_pnr_enc","C_KON","D_FODDATO","C_STATUS","D_STATUS_HEN_START"])
 		#t_person = pd.read_csv("/users/secureome/home/projects/registries/lpr2bth/2018/cpr/t_person.tsv", dtype="str",sep="\t",usecols=["v_pnr_enc","C_KON","D_FODDATO","C_STATUS","D_STATUS_HEN_START"])
-		
+		# convert dates to datetime
+		t_person["D_STATUS_HEN_START"] = pd.to_datetime(t_person["D_STATUS_HEN_START"],format="%Y-%m-%d",errors="coerce")
+		t_person["D_FODDATO"] = pd.to_datetime(t_person["D_FODDATO"],format="%Y-%m-%d",errors="coerce")
+		# Get birth year
+		t_person["Birth_year"] = t_person["D_FODDATO"].dt.year
+
 		# Only patient in BTH
 		t_person = t_person[t_person.v_pnr_enc != "MISSING_IN_BTH"].copy()
 		t_person.rename({"v_pnr_enc":"cpr_enc"},axis=1,inplace=True)
 		t_person.drop_duplicates(inplace=True) # none duplicates!
 
-		t_person["D_FODDATO"] = pd.to_datetime(t_person["D_FODDATO"],format="%Y-%m-%d",errors="coerce")
-		t_person["D_STATUS_HEN_START"] = pd.to_datetime(t_person["D_STATUS_HEN_START"],format="%Y-%m-%d",errors="coerce")
-		t_person["Birth_year"] = t_person["D_FODDATO"].dt.year
+		# Add death registration
+		t_person["Dead"] = 0
+		t_person.loc[t_person.C_STATUS == "90", "Dead"] = 1
+
+		# Merge onto bloodtypes
+		merge = pd.merge(bloodtypes,t_person,on="cpr_enc",how="inner")
+
+		# --- Filtering --- #
+		merge.cpr_enc.nunique() # database of 484197 patients
+ 
+
+		# None -> Remove weak RhD bloodtypes
+		#mask_weak_RhD = ((bloodtypes.Bloodtype=="AB+DU")|(bloodtypes.Bloodtype=="0+DU")|(bloodtypes.Bloodtype=="B+DU")|(bloodtypes.Bloodtype=="A+DU"))
+		#cprs_w_weak_RhD = bloodtypes.loc[mask_weak_RhD].cpr_enc
+		# Remove
+		#merge = merge.loc[~merge.cpr_enc.isin(cprs_w_weak_RhD)]
+		#merge.cpr_enc.nunique() # datebase of 483903 patients
+
+		# Remove cprs with changing bloodtypes
+		mask_bloodtype_change = (bloodtypes.duplicated(["cpr_enc"],keep=False))
+		cprs_w_bloodtype_change = bloodtypes.loc[mask_bloodtype_change].cpr_enc
+		# Remove
+		merge = merge.loc[~merge.cpr_enc.isin(cprs_w_bloodtype_change)]
+		merge.cpr_enc.nunique() # datebase of 483903 patients
+		# 484197 - 483903 = 294 patients
 
 		# Drop patient dying or moving before 1977-1-1
 		start_of_registry = pd.Timestamp(datetime.date(1977, 1, 1))
-		t_person = t_person.loc[~((t_person.D_STATUS_HEN_START < start_of_registry)&(t_person.C_STATUS != 1))].copy()
+		mask_out_of_registry = ((t_person.D_STATUS_HEN_START < start_of_registry)&(t_person.C_STATUS != 1))
+		cprs_out_of_registry = t_person.loc[mask_out_of_registry].cpr_enc
+		# Remove
+		merge = merge.loc[~merge.cpr_enc.isin(cprs_out_of_registry)]
+		merge.cpr_enc.nunique() # datebase of 483854 patients
+		# 483903 - 483854 = 49 patient
 
-		# Add death
-		t_person["Dead"] = 0
-		t_person.loc[t_person.C_STATUS == "90", "Dead"] = 1
-		# Merge onto bloodtypes
-		merge = pd.merge(bloodtypes,t_person,on="cpr_enc",how="inner")
 		# save
 		merge.to_pickle(output.outfile)
+		#merge.to_pickle("data/interim/bloodtypes_cleaned.pkl")
 
 
 rule add_bloodtype_to_lpr:
@@ -406,8 +433,8 @@ rule add_bloodtype_to_lpr:
 	threads: 1,
 	run:
 		# testing
-		lpr = pd.read_pickle("data/processed/lpr_phecodes_block.pkl")
-		bloodtypes = pd.read_pickle("data/interim/bloodtypes_cleaned.pkl")
+		#lpr = pd.read_pickle("data/processed/lpr_phecodes_block.pkl")
+		#bloodtypes = pd.read_pickle("data/interim/bloodtypes_cleaned.pkl")
 
 		# Load lpr and bloodtypes
 		lpr = pd.read_pickle(input.lpr)
@@ -421,13 +448,17 @@ rule add_bloodtype_to_lpr:
 		lpr = lpr.loc[(lpr.D_INDDTO >= start_of_registry)&(lpr.D_INDDTO <= end_of_registry),:]
 
 		# Merge bloodtypes and lpr
-		merge = pd.merge(lpr,bloodtypes,on="cpr_enc",how="inner")
+		#merge = pd.merge(lpr,bloodtypes,on="cpr_enc",how="inner")
+		# Very few patients may not have A and B diagnosis, therefore right join
+		merge = pd.merge(lpr,bloodtypes,on="cpr_enc",how="right")
 		del lpr, bloodtypes
 
 		# Drop diagnosis given before date of birth
-		# Non are dropped!
-		merge = merge.loc[merge.D_INDDTO >= merge.D_FODDATO].copy()
-
+		# Dont drop these diagnosis as they all related to birth!!
+		# 483854 - 482237 = 1617 patients dropped
+		#test = merge.loc[(merge.D_INDDTO < merge.D_FODDATO)]
+		#test.ICDchapter.unique() # chapter 16
+		#merge = merge.loc[merge.D_INDDTO >= merge.D_FODDATO].copy()
 
 		# Entry data
 		merge["D_entry"] = merge["D_FODDATO"]
@@ -647,7 +678,7 @@ rule poisson_allVSOne_ABO:
 	input:
 		phewas_data = "data/processed/PheWAS/{phecode}.tsv",
 	output:
-		estimates = "results/20220531/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv",
+		estimates = "results/20220915/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv",
 	params:
 		blood_group = "{blood_group}",
 	resources:
@@ -668,7 +699,7 @@ rule poisson_allVSOne_RhD:
 	input:
 		phewas_data = "data/processed/PheWAS/{phecode}.tsv",
 	output:
-		estimates = "results/20220531/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",
+		estimates = "results/20220915/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",
 	resources:
 		tmin = 60*2,
 		mem_mb = 1024*6,
@@ -684,11 +715,11 @@ rule poisson_allVSOne_RhD:
 
 rule collect_allVSOne_phewas:
 	input:
-		AB0_phewas_estimates = expand("results/20220531/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv",phecode=phecodes_to_include,blood_group=["A","B","AB","0"]),
-		RhD_phewas_estimates = expand("results/20220531/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=phecodes_to_include),
+		AB0_phewas_estimates = expand("results/20220915/allVSOne/enter_registry/phewas/{blood_group}/estimates_{phecode}.tsv",phecode=phecodes_to_include,blood_group=["A","B","AB","0"]),
+		RhD_phewas_estimates = expand("results/20220915/allVSOne/enter_registry/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=phecodes_to_include),
 		phecodes = "/users/people/petras/base_data/phecode_def.csv",
 	output:
-		phewas = "results/20220531/allVSOne/enter_registry/phewas_estimates.tsv",
+		phewas = "results/20220915/allVSOne/enter_registry/phewas_estimates.tsv",
 	resources:
 		tmin = 60*2,
 		mem_mb = 1024*30,
@@ -744,7 +775,7 @@ rule RUN_phewas_age_at_diag_allVSOne_ABO:
 	input:
 		phewas_data = "data/processed/age_at_diagnosis/phewas/{phecode}.tsv",
 	output:
-		estimates = "results/20220531/allVSOne/age_at_diagnosis/phewas/{blood_group}/estimates_{phecode}.tsv",
+		estimates = "results/20220915/allVSOne/age_at_diagnosis/phewas/{blood_group}/estimates_{phecode}.tsv",
 	params:
 		blood_group = "{blood_group}",
 	resources:
@@ -763,7 +794,7 @@ rule RUN_phewas_age_at_diag_allVSOne_RhD:
 	input:
 		phewas_data = "data/processed/age_at_diagnosis/phewas/{phecode}.tsv",
 	output:
-		estimates = "results/20220531/allVSOne/age_at_diagnosis/phewas/RhD/RhD_estimates_{phecode}.tsv",
+		estimates = "results/20220915/allVSOne/age_at_diagnosis/phewas/RhD/RhD_estimates_{phecode}.tsv",
 	resources:
 		tmin = 60*24*1,
 		mem_mb = 1024*5,
@@ -778,11 +809,11 @@ rule RUN_phewas_age_at_diag_allVSOne_RhD:
 
 rule collect_allVSOne_phewas_linreg:
 	input:
-		AB0_phewas_estimates = expand("results/20220531/allVSOne/age_at_diagnosis/phewas/{blood_group}/estimates_{phecode}.tsv",phecode=non_congenital_phecodes_to_include,blood_group=["A","B","AB","0"]),
-		RhD_phewas_estimates = expand("results/20220531/allVSOne/age_at_diagnosis/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=non_congenital_phecodes_to_include),
+		AB0_phewas_estimates = expand("results/20220915/allVSOne/age_at_diagnosis/phewas/{blood_group}/estimates_{phecode}.tsv",phecode=non_congenital_phecodes_to_include,blood_group=["A","B","AB","0"]),
+		RhD_phewas_estimates = expand("results/20220915/allVSOne/age_at_diagnosis/phewas/RhD/RhD_estimates_{phecode}.tsv",phecode=non_congenital_phecodes_to_include),
 		phecodes = "/users/people/petras/base_data/phecode_def.csv",
 	output:
-		phewas = "results/20220531/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
+		phewas = "results/20220915/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
 	resources:
 		tmin = 60*2,
 		mem_mb = 1024*30,

@@ -3,13 +3,13 @@ library(kableExtra)
 library(glue)
 library(gt)
 
-#setwd("/users/projects/bloodtype/"
-setwd("/Users/pnr874/Desktop/PhD/Papers/Paper3 Bloodtypes/eLife/Data export")
+setwd("/users/projects/bloodtype/")
+#setwd("/Users/pnr874/Desktop/PhD/Papers/Paper3 Bloodtypes/eLife/Data export")
 
 
 ## PheWAS ##
 
-data = read_tsv("results/20220531/allVSOne/enter_registry/phewas_estimates.tsv")
+data = read_tsv("results/20220915/allVSOne/enter_registry/phewas_estimates.tsv")
 data$phecode = as.character(data$phecode)
 data <- data %>% mutate(phecode = str_trim(phecode))
 data <- data %>% select(-c(term))
@@ -174,28 +174,27 @@ brunak_palette = c(
 "injuries" = "#FF0000")
 
 
-# With new mapping
 # With diagnosis colors
 kbl(data,"html",escape = FALSE,align=c("l","l","c","c","r","c","r","c","r","c","r","c","r","c"),
   col.names=c("Phecode","Phenotype","Cases","Person-years","IRR (95%CI)","P-value","IRR (95%CI)","P-value","IRR (95%CI)","P-value","IRR (95%CI)","P-value","IRR (95%CI)","P-value")) %>% 
   kable_classic("striped") %>%
   add_header_above(c(" " = 4, "Blood group A" = 2,"Blood group B" = 2,"Blood group AB" = 2,"Blood group 0" = 2,"Blood group RhD" = 2)) %>%
   pack_rows("Infectious Diseases", 1, 6, label_row_css = "background-color: #2FCFD3; color: #fff;",indent = FALSE) %>%
-  pack_rows("Neoplasms", 7, 14, label_row_css = "background-color: #9E4F46; color: #fff;",indent = FALSE) %>%
-  pack_rows("Endocrine/Metabolic", 15, 24, label_row_css = "background-color: #FF1AB9; color: #fff;",indent = FALSE) %>%
-  pack_rows("Hematopoietic", 25, 30, label_row_css = "background-color: #F69EDC; color: #fff;",indent = FALSE) %>%
-  pack_rows("Mental Disorders", 31, 31, label_row_css = "background-color: #2DC92D; color: #fff;",indent = FALSE) %>%
-  pack_rows("Neurological", 32, 35, label_row_css = "background-color: #004DE6; color: #fff;",indent = FALSE) %>%
-  pack_rows("Sense Organs", 36, 43, label_row_css = "background-color: #FFC184; color: #fff;",indent = FALSE) %>%
-  pack_rows("Circulatory System", 44, 65, label_row_css = "background-color: #A00CC4; color: #fff;",indent = FALSE) %>%
-  pack_rows("Respiratory", 66, 69, label_row_css = "background-color: #625D5D; color: #fff;",indent = FALSE) %>%
-  pack_rows("Digestive", 70, 87, label_row_css = "background-color: #008495; color: #fff;",indent = FALSE) %>%
-  pack_rows("Genitourinary", 88, 90, label_row_css = "background-color: #F9DF1E; color: #fff;",indent = FALSE) %>%
-  pack_rows("Pregnancy Complications", 91, 98, label_row_css = "background-color: #17CE95; color: #fff;",indent = FALSE) %>%
-  pack_rows("Dermatologic", 99, 101, label_row_css = "background-color: #729656; color: #fff;",indent = FALSE) %>%
-  pack_rows("Musculoskeletal", 102, 112, label_row_css = "background-color: #960866; color: #fff;",indent = FALSE) %>%
-  pack_rows("Congenital Anomalies", 113, 116, label_row_css = "background-color: #12601B; color: #fff;",indent = FALSE) %>%
-  save_kable(file = "results/20220531/allVSOne/enter_registry/table2.html", self_contained = T)  
+  pack_rows("Neoplasms", 7, 12, label_row_css = "background-color: #9E4F46; color: #fff;",indent = FALSE) %>%
+  pack_rows("Endocrine/Metabolic", 13, 21, label_row_css = "background-color: #FF1AB9; color: #fff;",indent = FALSE) %>%
+  pack_rows("Hematopoietic", 22, 27, label_row_css = "background-color: #F69EDC; color: #fff;",indent = FALSE) %>%
+  pack_rows("Mental Disorders", 28, 28, label_row_css = "background-color: #2DC92D; color: #fff;",indent = FALSE) %>%
+  pack_rows("Neurological", 29, 32, label_row_css = "background-color: #004DE6; color: #fff;",indent = FALSE) %>%
+  pack_rows("Sense Organs", 33, 40, label_row_css = "background-color: #FFC184; color: #fff;",indent = FALSE) %>%
+  pack_rows("Circulatory System", 41, 62, label_row_css = "background-color: #A00CC4; color: #fff;",indent = FALSE) %>%
+  pack_rows("Respiratory", 63, 66, label_row_css = "background-color: #625D5D; color: #fff;",indent = FALSE) %>%
+  pack_rows("Digestive", 67, 83, label_row_css = "background-color: #008495; color: #fff;",indent = FALSE) %>%
+  pack_rows("Genitourinary", 84, 87, label_row_css = "background-color: #F9DF1E; color: #fff;",indent = FALSE) %>%
+  pack_rows("Pregnancy Complications", 88, 95, label_row_css = "background-color: #17CE95; color: #fff;",indent = FALSE) %>%
+  pack_rows("Dermatologic", 96, 98, label_row_css = "background-color: #729656; color: #fff;",indent = FALSE) %>%
+  pack_rows("Musculoskeletal", 99, 108, label_row_css = "background-color: #960866; color: #fff;",indent = FALSE) %>%
+  pack_rows("Congenital Anomalies", 109, 112, label_row_css = "background-color: #12601B; color: #fff;",indent = FALSE) %>%
+  save_kable(file = "results/20220915/allVSOne/enter_registry/table2.html", self_contained = T)  
 
 
 
@@ -203,7 +202,7 @@ kbl(data,"html",escape = FALSE,align=c("l","l","c","c","r","c","r","c","r","c","
 
 ## Table of all phecode for suplementary
 
-data = read_tsv("results/20220531/allVSOne/enter_registry/phewas_estimates.tsv")
+data = read_tsv("results/20220915/allVSOne/enter_registry/phewas_estimates.tsv")
 data$phecode = as.character(data$phecode)
 
 # Select only blood type info
@@ -305,14 +304,14 @@ kbl(data,"html",escape = F,col.names=c("Phecode","Phenotype","Cases","Person-yea
   pack_rows("Dermatologic", 1085, 1162, label_row_css = "background-color: #729656; color: #fff;",indent = FALSE) %>%
   pack_rows("Musculoskeletal", 1163, 1260, label_row_css = "background-color: #960866; color: #fff;",indent = FALSE) %>%
   pack_rows("Congenital Anomalies", 1261, 1312, label_row_css = "background-color: #12601B; color: #fff;",indent = FALSE) %>%
-  save_kable(file = "results/20220531/allVSOne/enter_registry/supplementary_table2.html", self_contained = T) 
+  save_kable(file = "results/20220915/allVSOne/enter_registry/supplementary_table2.html", self_contained = T) 
 
 
 
 
 # Age at first diagnosis #
 
-data = read_tsv("results/20220531/allVSOne/age_at_diagnosis/phewas_estimates.tsv")
+data = read_tsv("results/20220915/allVSOne/age_at_diagnosis/phewas_estimates.tsv")
 data$phecode = as.character(data$phecode)
 
 # Select subset with significant phecodes
@@ -366,17 +365,19 @@ data <- data %>%
 
 # Save to file # Only works in R studio
 #caption = "Associations between ABO blood group, Rhesus type and diagnosis rate ratio"
-kbl(data,"html",escape = F,col.names=c("Phecode","Phenotype","N","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value")) %>% 
+kbl(data,"html",escape = F,col.names=c("Phecode","Phenotype","N","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value"),
+      align=c("l","l","c","c","c","c","c","c","c","c","c","c","c","c")) %>% 
   kable_classic("striped") %>%
   add_header_above(c(" " = 3, "Blood group A" = 2,"Blood group B" = 2,"Blood group AB" = 2,"Blood group 0" = 2,"Blood group RhD" = 2)) %>%
-  save_kable(file = "results/20220531/allVSOne/age_at_diagnosis/suplementary_table3.html", self_contained = T)
+  save_kable(file = "results/20220915/allVSOne/age_at_diagnosis/suplementary_table3.html", self_contained = T)
 
 
 # Only significante
 data <- data %>% filter(phecode %in% significant_phecodes)
-kbl(data,"html",escape = F,col.names=c("Phecode","Phenotype","N","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value")) %>% 
+kbl(data,"html",escape = F,col.names=c("Phecode","Phenotype","N","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value","Estimate (95%CI)","P-value"),
+      align=c("l","l","c","c","c","c","c","c","c","c","c","c","c","c")) %>%  
   kable_classic("striped") %>%
   add_header_above(c(" " = 3, "Blood group A" = 2,"Blood group B" = 2,"Blood group AB" = 2,"Blood group 0" = 2,"Blood group RhD" = 2)) %>%
-  save_kable(file = "results/20220531/allVSOne/age_at_diagnosis/table3.html", self_contained = T)
+  save_kable(file = "results/20220915/allVSOne/age_at_diagnosis/table3.html", self_contained = T)
 
 

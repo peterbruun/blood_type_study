@@ -59,8 +59,8 @@ mapping = data.frame(category,brunak_palette)
 
 
 #data = read_tsv(snakemake@input[["phewas"]])
-#data = read_tsv("results/20220531/quasi_spline_poisson/enter_registry/phewas_estimates.tsv")
-data = read_tsv("results/20220531/allVSOne/enter_registry/phewas_estimates.tsv")
+#data = read_tsv("results/20220915/quasi_spline_poisson/enter_registry/phewas_estimates.tsv")
+data = read_tsv("results/20220915/allVSOne/enter_registry/phewas_estimates.tsv")
 
 
 # Map colour code onto
@@ -77,12 +77,6 @@ data %>% select(brunak_palette) %>% distinct() %>% count()
 
 
 
-
-
-
-
-
-
 # testing
 #trait= "factor(AB0)A"
 #bloodtype = data[data$term == trait,]
@@ -92,7 +86,7 @@ for (trait in c("A","B","AB","0","RhD")) {
 	bloodtype = data[data$blood_group == trait,]
 
 	# Volcano plot
-	pdf(file=paste("results/20220531/allVSOne/enter_registry/Volcano_",trait,".pdf",sep = ""), height = 8)
+	pdf(file=paste("results/20220915/allVSOne/enter_registry/Volcano_",trait,".pdf",sep = ""), height = 8)
 	print(bloodtype %>% ggplot(aes(x=log2(estimate),y=-log10(p.value_FDR))) + 
 		geom_point(aes(color=FDR_.05)) +
 		geom_text_repel(data = .%>% filter(FDR_.05==TRUE),aes(label=phecode)) +
@@ -126,7 +120,7 @@ for (trait in c("A","B","AB","0","RhD")) {
 	#color.palette=brunak_palette
 
 	bloodtype <- bloodtype %>% arrange(phecode)
-	pdf(file=paste("results/20220531/allVSOne/enter_registry/PheWAS_",trait,".pdf",sep = ""),width=13,height=7)
+	pdf(file=paste("results/20220915/allVSOne/enter_registry/PheWAS_",trait,".pdf",sep = ""),width=13,height=7)
 	#if (trait == "RhD"){
 	#	title = "Blood Group RhD (Reference: RhD Negative)"
 	#} else {
@@ -152,6 +146,8 @@ for (trait in c("A","B","AB","0","RhD")) {
 }
 
 
+
+
 # Forest Plot
 
 
@@ -161,8 +157,8 @@ for (trait in c("A","B","AB","0","RhD")) {
 library(ggforestplot)
 library(ggforce)
 
-data = read_tsv("results/20220531/allVSOne/enter_registry/phewas_estimates.tsv")
-#data = read_tsv("results/20220531/quasi_spline_poisson/enter_registry/phewas_estimates.tsv")
+data = read_tsv("results/20220915/allVSOne/enter_registry/phewas_estimates.tsv")
+#data = read_tsv("results/20220915/quasi_spline_poisson/enter_registry/phewas_estimates.tsv")
 data$phecode = as.character(data$phecode)
 
 # Select subset with significant phecodes
@@ -218,7 +214,7 @@ data <- data %>%
 
 # Save figure
 
-pdf(file="results/20220531/allVSOne/enter_registry/forestplot_phewas.pdf",width=8,height=60)#25
+pdf(file="results/20220915/allVSOne/enter_registry/forestplot_phewas.pdf",width=8,height=60)#25
 print(forestplot(
   df = data,
   estimate = estimate,
@@ -251,7 +247,7 @@ dev.off()
 # Remove bone marrow
 data <- data %>% filter(phecode!="860")
 
-pdf(file="results/20220531/allVSOne/enter_registry/forestplot_phewas_not_bone.pdf",width=8,height=60)
+pdf(file="results/20220915/allVSOne/enter_registry/forestplot_phewas_not_bone.pdf",width=8,height=60)
 print(forestplot(
   df = data,
   estimate = estimate,
