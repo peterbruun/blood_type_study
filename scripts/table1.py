@@ -29,10 +29,11 @@ from tableone import TableOne
 
 # Testing
 
+os.chdir("/users/projects/bloodtype/")
 
 # Load file
 data = pd.read_pickle(snakemake.input["table1_file"])
-#data = pd.read_pickle("data/processed/bloodtype_and_lpr.pkl")
+#data = pd.read_pickle("data/processed/bloodtype_final.pkl")
 
 data.drop_duplicates(subset=["cpr_enc"],inplace=True)
 
@@ -82,16 +83,16 @@ table1.to_html(snakemake.output["table1"])
 ## --------------------------------------------------------- ##
 # Birth year distribution
 
-# plt.clf()
-# data.Birth_year = data.Birth_year.astype(int)
-# fig, ax = plt.subplots(figsize=(10, 7))
-# #ax = sns.countplot(x="Birth_year", data=data)
-# ax = sns.distplot(data["Birth_year"],kind="hist")
-# ax.set(xlabel='Birth Year', ylabel='Frequency')
-# plt.xticks(rotation=0,size=10)
-# #ax.set_xticklabels(labels, fontsize=14, rotation=30, ha= 'right')
-# plt.tight_layout()
-# plt.savefig("results/Birth_year_count_plot.png",dpi=199)
+plt.clf()
+data.Birth_year = data.Birth_year.astype(int)
+fig, ax = plt.subplots(figsize=(10, 7))
+sns.set_style("whitegrid")
+ax = sns.histplot(x="Birth_year", data=data, discrete =True)
+ax.set(xlabel='Birth year', ylabel='Number of individuals')
+#plt.xticks(rotation=0,size=10)
+plt.tight_layout()
+plt.savefig("results/Birth_year_count_plot.png",dpi=199)
+
 
 
 # # Age at entry distribution
