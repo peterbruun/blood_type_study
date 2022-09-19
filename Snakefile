@@ -11,15 +11,17 @@
 # 1) First time the script is run the follwing snakemake command should be evoked
 # run: snakemake -R --until filter_phecodes_and_blocklevels_level3_to_include
 #bash snakemake_qsub_fatnode -j 10 --snakefile /users/projects/bloodtype/Snakefile --dry-run --until filter_phecodes_and_blocklevels_level3_to_include
+#bash snakemake_qsub_fatnode -j 10 --snakefile /users/projects/bloodtype/Snakefile --dry-run --forcerun clean_bloodtype --until filter_phecodes_and_blocklevels_level3_to_include
+
 
 # And first run should be set to True (uncomment line below)
-#first_run = True
+first_run = True
 
 # 2) At the second run the clean snakemake command should be evoked
 # run: snakemake
 #bash snakemake_qsub_fatnode -j 100 --snakefile /users/projects/bloodtype/Snakefile --dry-run
 # And the first run should be set to False (uncomment line below)
-first_run = False
+#first_run = False
 
 
 # ----------------------------------------------- #
@@ -363,9 +365,7 @@ rule clean_bloodtype:
 		bloodtypes = bloodtypes[(bloodtypes.Date_bt_meassured>=start_of_BTH)&(bloodtypes.Date_bt_meassured<=end_of_BTH)].copy()
 		# Drop duplicates with same meassured bloodtype
 		bloodtypes.drop_duplicates(["cpr_enc","Bloodtype"],inplace=True,keep="first")
-		# Drop entries where bloodtype wasnt registered
-		mask = (bloodtypes.Bloodtype == "XX")
-		bloodtypes = bloodtypes.loc[~mask,:].copy()
+
 
 		# Add birthdate and sex
 		t_person = pd.read_csv(input["t_person"], dtype="str",sep="\t",usecols=["v_pnr_enc","C_KON","D_FODDATO","C_STATUS","D_STATUS_HEN_START"])
@@ -389,7 +389,7 @@ rule clean_bloodtype:
 		merge = pd.merge(bloodtypes,t_person,on="cpr_enc",how="inner")
 
 		# --- Filtering --- #
-		merge.cpr_enc.nunique() # database of 484197 patients
+		merge.cpr_enc.nunique() # database of 485,033 patients
  
 
 		# None -> Remove weak RhD bloodtypes
@@ -399,13 +399,20 @@ rule clean_bloodtype:
 		#merge = merge.loc[~merge.cpr_enc.isin(cprs_w_weak_RhD)]
 		#merge.cpr_enc.nunique() # datebase of 483903 patients
 
+		# Drop entries with bone marrow transplant
+		mask_bone_marrow = (bloodtypes.Bloodtype == "XX")
+		cprs_w_bone_marrow = bloodtypes.loc[mask_bone_marrow].cpr_enc
+		merge = merge.loc[~merge.cpr_enc.isin(cprs_w_bone_marrow)]
+		merge.cpr_enc.nunique() # datebase of 483,152 patients
+		# 485033 - 483152 = 1881 patients
+
 		# Remove cprs with changing bloodtypes
 		mask_bloodtype_change = (bloodtypes.duplicated(["cpr_enc"],keep=False))
 		cprs_w_bloodtype_change = bloodtypes.loc[mask_bloodtype_change].cpr_enc
 		# Remove
 		merge = merge.loc[~merge.cpr_enc.isin(cprs_w_bloodtype_change)]
-		merge.cpr_enc.nunique() # datebase of 483903 patients
-		# 484197 - 483903 = 294 patients
+		merge.cpr_enc.nunique() # datebase of 482963 patients
+		# 483152 - 482963 = 189 patients
 
 		# Drop patient dying or moving before 1977-1-1
 		start_of_registry = pd.Timestamp(datetime.date(1977, 1, 1))
@@ -413,8 +420,12 @@ rule clean_bloodtype:
 		cprs_out_of_registry = t_person.loc[mask_out_of_registry].cpr_enc
 		# Remove
 		merge = merge.loc[~merge.cpr_enc.isin(cprs_out_of_registry)]
-		merge.cpr_enc.nunique() # datebase of 483854 patients
-		# 483903 - 483854 = 49 patient
+		merge.cpr_enc.nunique() # datebase of 482,914 patients
+		# 482963 - 482914 = 49 patient
+
+		# Final: 482,914 patients
+
+		# --- Filtering Done --- #
 
 		# save
 		merge.to_pickle(output.outfile)
