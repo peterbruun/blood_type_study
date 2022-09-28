@@ -2,9 +2,9 @@
 Snakemake pipeline to reproduce the results from the paper: \
 Associations of ABO and Rhesus D Blood Groups with Phenome-Wide Disease Incidence: A 41-year Retrospective Cohort Study of 482,914 Patients.\
 Developed by: Peter Bruun-Rasmussen. \
-Please consider citing the paper if you use the code: https://www.medrxiv.org/content/10.1101/2022.09.23.22280292v1 \
+Please consider citing the paper if you use the code: https://www.medrxiv.org/content/10.1101/2022.09.23.22280292v1 
 
-Bruun-Rasmussen, Peter, et al. “Associations of ABO and Rhesus D Blood Groups with Phenome-Wide Disease Incidence: A 41-Year Retrospective Cohort Study of 482,914 Patients.” MedRxiv, Sept. 2022, doi:10.1101/2022.09.23.22280292. \
+Bruun-Rasmussen, Peter, et al. “Associations of ABO and Rhesus D Blood Groups with Phenome-Wide Disease Incidence: A 41-Year Retrospective Cohort Study of 482,914 Patients.” MedRxiv, Sept. 2022, doi:10.1101/2022.09.23.22280292. 
 
 
 @article {Bruun-Rasmussen2022.09.23.22280292,
