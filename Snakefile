@@ -15,13 +15,13 @@
 
 
 # And first run should be set to True (uncomment line below)
-first_run = True
+#first_run = True
 
 # 2) At the second run the clean snakemake command should be evoked
 # run: snakemake
 #bash snakemake_qsub_fatnode -j 100 --snakefile /users/projects/bloodtype/Snakefile --dry-run
 # And the first run should be set to False (uncomment line below)
-#first_run = False
+first_run = False
 
 
 # ----------------------------------------------- #
@@ -81,6 +81,9 @@ rule all:
 		
 		# Age at diagnosis:
 		"results/20220915/allVSOne/age_at_diagnosis/phewas_estimates.tsv",
+
+		# Supplementary: O as reference
+		"results/20220915/referenceO/enter_registry/phewas_estimates.tsv",
 
 		# Infiles
 		bloodtypes = "/users/secureome/home/projects/bth/personal_folders/vicmuse/BloodType/bloodtypes_cleaned.tsv",
@@ -832,7 +835,36 @@ rule collect_allVSOne_phewas_linreg:
 	script:
 		"scripts/collect_results_allVSOne.py"
 
+## ----- Supplemental analysis using blood group O as the reference ---- ##
+
+rule referenceO_LogLinearPoisson_phewas:
+	input:
+		phewas_data = "data/processed/PheWAS/{phecode}.tsv",
+	output:
+		estimates = "results/20220915/referenceO/enter_registry/phewas/estimates_{phecode}.tsv",
+	resources:
+		tmin = 60*2,
+		mem_mb = 1024*5,
+	threads: 1,
+	run:
+		# ---  RUN LOG-LINEAR POISSON REGRESSION --- #
+		Poisson_CMB = [
+			'Rscript scripts/refO_loglinearpoisson.R',
+			'{input.phewas_data}',
+			'{output.estimates}']
+		shell(' '.join(Poisson_CMB))
 
 
 
-
+rule referenceO_collect_LogLinearPoisson_phewas:
+ 	input:
+ 		phewas_estimates = expand("results/20220915/referenceO/enter_registry/phewas/estimates_{phecode}.tsv",phecode=phecodes_to_include),
+ 		phecodes = "/users/secureome/home/people/petras/base_data/phecode_def.csv",
+ 	output:
+ 		phewas = "results/20220915/referenceO/enter_registry/phewas_estimates.tsv",
+ 	resources:
+ 		tmin = 60*2,
+ 		mem_mb = 1024*30,
+ 	threads: 1,
+ 	script:
+ 		"scripts/refO_collect_results.py"
